@@ -191,9 +191,9 @@ fn test_date_def() {
 
 #[test]
 fn test_string_def() {
-    gen_test!(string_def, "string0", "hello".to_string());
-    gen_test!(string_def, "string1", "Test".to_string());
-    gen_test!(string_def, "string2", "Test\x04".to_string());
+    gen_test!(string_def, "string0", Property::StringDefault("hello".to_string()));
+    gen_test!(string_def, "string1", Property::StringDefault("Test".to_string()));
+    gen_test!(string_def, "string2", Property::StringDefault("Test\x04".to_string()));
     // invalid unicode
     gen_test!(fail string_def, "string3");
     // unclosed quote
@@ -202,77 +202,89 @@ fn test_string_def() {
 
 #[test]
 fn test_binary_def() {
-    gen_test!(binary_def, "string0", vec![0x68, 0x65, 0x6c, 0x6c, 0x6f]);
-    gen_test!(binary_def, "string1", vec![0x54, 0x65, 0x73, 0x74]);
-    gen_test!(binary_def, "string2", vec![0x54, 0x65, 0x73, 0x74, 0x04]);
+    gen_test!(binary_def, "string0", Property::BinaryDefault(vec![0x68, 0x65, 0x6c, 0x6c, 0x6f]));
+    gen_test!(binary_def, "string1", Property::BinaryDefault(vec![0x54, 0x65, 0x73, 0x74]));
+    gen_test!(binary_def, "string2", Property::BinaryDefault(vec![0x54, 0x65, 0x73, 0x74, 0x04]));
+
     // invalid unicode/ascii is fine for a binary default
-    gen_test!(binary_def, "string3", vec![0x54, 0x65, 0x73, 0x74, 0x80, 0x81, 0x82]);
+    gen_test!(binary_def, "string3", Property::BinaryDefault(
+        vec![0x54, 0x65, 0x73, 0x74, 0x80, 0x81, 0x82])
+    );
+
     // unclosed quote
     gen_test!(fail binary_def, "string4");
 }
 
 #[test]
 fn test_int_range() {
-    gen_test!(int_range, "int_range0", vec![IntRangeItem::Bounded { start: -2, end: 5 }]);
-    gen_test!(int_range, "int_range1", vec![IntRangeItem::From { start: 4 }]);
-    gen_test!(int_range, "int_range2", vec![IntRangeItem::To { end: 102 }]);
-    gen_test!(int_range, "int_range3", vec![IntRangeItem::Single(45)]);
-    gen_test!(int_range, "int_range4", vec![
+    gen_test!(int_range, "int_range0", Property::IntRange(vec![
+        IntRangeItem::Bounded { start: -2, end: 5 },
+    ]));
+    gen_test!(int_range, "int_range1", Property::IntRange(vec![IntRangeItem::From { start: 4 }]));
+    gen_test!(int_range, "int_range2", Property::IntRange(vec![IntRangeItem::To { end: 102 }]));
+    gen_test!(int_range, "int_range3", Property::IntRange(vec![IntRangeItem::Single(45)]));
+    gen_test!(int_range, "int_range4", Property::IntRange(vec![
         IntRangeItem::Bounded { start: -1, end: 4 },
         IntRangeItem::Single(5),
         IntRangeItem::From { start: 66 },
-    ]);
-    gen_test!(int_range, "int_range5", vec![
+    ]));
+    gen_test!(int_range, "int_range5", Property::IntRange(vec![
         IntRangeItem::Bounded { start: -100, end: -99 },
         IntRangeItem::Single(44),
         IntRangeItem::Single(55),
         IntRangeItem::Bounded { start: 66, end: 70 },
-    ]);
+    ]));
     gen_test!(fail int_range, "int_range6");
 }
 
 #[test]
 fn test_uint_range() {
-    gen_test!(uint_range, "uint_range0", vec![UintRangeItem::Bounded { start: 2, end: 5 }]);
-    gen_test!(uint_range, "uint_range1", vec![UintRangeItem::From { start: 4 }]);
-    gen_test!(uint_range, "uint_range2", vec![UintRangeItem::Single(45)]);
-    gen_test!(uint_range, "uint_range3", vec![
+    gen_test!(uint_range, "uint_range0", Property::UintRange(vec![
+         UintRangeItem::Bounded { start: 2, end: 5 },
+    ]));
+    gen_test!(uint_range, "uint_range1", Property::UintRange(vec![
+        UintRangeItem::From { start: 4 },
+    ]));
+    gen_test!(uint_range, "uint_range2", Property::UintRange(vec![
+        UintRangeItem::Single(45),
+    ]));
+    gen_test!(uint_range, "uint_range3", Property::UintRange(vec![
         UintRangeItem::Bounded { start: 1, end: 4 },
         UintRangeItem::Single(5),
         UintRangeItem::From { start: 66 },
-    ]);
-    gen_test!(uint_range, "uint_range4", vec![
+    ]));
+    gen_test!(uint_range, "uint_range4", Property::UintRange(vec![
         UintRangeItem::Bounded { start: 100, end: 200 },
         UintRangeItem::Single(44),
         UintRangeItem::Single(55),
         UintRangeItem::Bounded { start: 66, end: 70 },
-    ]);
+    ]));
     gen_test!(fail uint_range, "uint_range5");
 }
 
 #[test]
 fn test_float_range() {
-    gen_test!(float_range, "float_range0", vec![
+    gen_test!(float_range, "float_range0", Property::FloatRange(vec![
         FloatRangeItem::From { start: 0f64, include_start: false },
-    ]);
-    gen_test!(float_range, "float_range1", vec![
+    ]));
+    gen_test!(float_range, "float_range1", Property::FloatRange(vec![
         FloatRangeItem::From { start: 0f64, include_start: true },
-    ]);
-    gen_test!(float_range, "float_range2", vec![
+    ]));
+    gen_test!(float_range, "float_range2", Property::FloatRange(vec![
         FloatRangeItem::To { end: 0f64, include_end: false },
-    ]);
-    gen_test!(float_range, "float_range3", vec![
+    ]));
+    gen_test!(float_range, "float_range3", Property::FloatRange(vec![
         FloatRangeItem::To { end: 1.2f64, include_end: true },
-    ]);
-    gen_test!(float_range, "float_range4", vec![
+    ]));
+    gen_test!(float_range, "float_range4", Property::FloatRange(vec![
         FloatRangeItem::Bounded {
             start: -1.34e4,
             include_start: false,
             end: 4.0f64,
             include_end: true,
         }
-    ]);
-    gen_test!(float_range, "float_range5", vec![
+    ]));
+    gen_test!(float_range, "float_range5", Property::FloatRange(vec![
         FloatRangeItem::Bounded {
             start: -4.4f64,
             include_start: true,
@@ -289,28 +301,28 @@ fn test_float_range() {
             start: 2.4e8,
             include_start: true,
         },
-    ]);
+    ]));
 }
 
 #[test]
 fn test_date_range() {
-    gen_test!(date_range, "date_range0", vec![
+    gen_test!(date_range, "date_range0", Property::DateRange(vec![
         DateRangeItem::From {
             start: NaiveDateTime::new(
                 NaiveDate::from_ymd(1902, 01, 02),
                 NaiveTime::from_hms(0, 0, 24)
             ),
         },
-    ]);
-    gen_test!(date_range, "date_range1", vec![
+    ]));
+    gen_test!(date_range, "date_range1", Property::DateRange(vec![
         DateRangeItem::To {
             end: NaiveDateTime::new(
                 NaiveDate::from_ymd(1995, 04, 18),
                 NaiveTime::from_hms_milli(4, 20, 0, 420)
             ),
         },
-    ]);
-    gen_test!(date_range, "date_range2", vec![
+    ]));
+    gen_test!(date_range, "date_range2", Property::DateRange(vec![
         DateRangeItem::Bounded {
             start: NaiveDateTime::new(
                 NaiveDate::from_ymd(2001, 1, 1),
@@ -327,69 +339,68 @@ fn test_date_range() {
                 NaiveTime::from_hms(0, 0, 0)
             ),
         },
-    ]);
+    ]));
     gen_test!(fail date_range, "date_range3");
 }
 
 #[test]
 fn test_string_range() {
-    gen_test!(string_range, "string_range0", vec![
+    gen_test!(string_range, "string_range0", Property::StringRange(vec![
         StringRangeItem::From { start: 32 },
-    ]);
-    gen_test!(string_range, "string_range1", vec![
-        StringRangeItem::Bounded {
-            start: 0x3040,
-            end:   0x309F,
-        },
-    ]);
-    gen_test!(string_range, "string_range2", vec![
+    ]));
+    gen_test!(string_range, "string_range1", Property::StringRange(vec![
+        StringRangeItem::Bounded { start: 0x3040, end: 0x309F },
+    ]));
+    gen_test!(string_range, "string_range2", Property::StringRange(vec![
         StringRangeItem::Single(42),
-    ]);
+    ]));
     gen_test!(fail string_range, "string_range3");
 }
 
 #[test]
 fn test_binary_range() {
-    gen_test!(binary_range, "binary_range0", vec![
+    gen_test!(binary_range, "binary_range0", Property::BinaryRange(vec![
         BinaryRangeItem::From { start: 32 },
-    ]);
-    gen_test!(binary_range, "binary_range1", vec![
+    ]));
+    gen_test!(binary_range, "binary_range1", Property::BinaryRange(vec![
         BinaryRangeItem::Bounded {
             start: 0x01,
             end:   0xFF,
         },
-    ]);
-    gen_test!(binary_range, "binary_range2", vec![
+    ]));
+    gen_test!(binary_range, "binary_range2", Property::BinaryRange(vec![
         BinaryRangeItem::Single(42),
-    ]);
+    ]));
     gen_test!(fail binary_range, "binary_range3");
 }
 
 #[test]
 fn test_size() {
-    gen_test!(size, "size_range0", vec![UintRangeItem::Bounded { start: 2, end: 5 }]);
-    gen_test!(size, "size_range1", vec![UintRangeItem::From { start: 4 }]);
-    gen_test!(size, "size_range2", vec![UintRangeItem::Single(45)]);
-    gen_test!(size, "size_range3", vec![
+    gen_test!(size, "size_range0", Property::Size(
+        vec![UintRangeItem::Bounded { start: 2, end: 5 }])
+    );
+    gen_test!(size, "size_range1", Property::Size(vec![UintRangeItem::From { start: 4 }]));
+    gen_test!(size, "size_range2", Property::Size(vec![UintRangeItem::Single(45)]));
+    gen_test!(size, "size_range3", Property::Size(vec![
         UintRangeItem::Bounded { start: 1, end: 4 },
         UintRangeItem::Single(5),
         UintRangeItem::From { start: 66 },
-    ]);
-    gen_test!(size, "size_range4", vec![
+    ]));
+    gen_test!(size, "size_range4", Property::Size(vec![
         UintRangeItem::Bounded { start: 100, end: 200 },
         UintRangeItem::Single(44),
         UintRangeItem::Single(55),
         UintRangeItem::Bounded { start: 66, end: 70 },
-    ]);
+    ]));
     gen_test!(fail size, "size_range5");
 }
 
 #[test]
 fn test_ordered() {
-    gen_test!(ordered, "ordered0", true);
-    gen_test!(ordered, "ordered1", true);
-    gen_test!(ordered, "ordered2", false);
-    gen_test!(ordered, "ordered3", false);
+    gen_test!(ordered, "ordered0", Property::Ordered(true));
+    gen_test!(ordered, "ordered1", Property::Ordered(true));
+    gen_test!(ordered, "ordered2", Property::Ordered(false));
+    gen_test!(ordered, "ordered3", Property::Ordered(false));
 }
 
 #[test]

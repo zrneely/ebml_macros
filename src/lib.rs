@@ -119,7 +119,48 @@ impl<'a> NewType<'a> {
                 &mut NewType::Int { ref mut range, .. } => *range = Some(x),
                 _ => unreachable!(),
             },
-            _ => unimplemented!(),
+            Property::UintDefault(x) => match self {
+                &mut NewType::Uint { ref mut default, .. } => *default = Some(x),
+                _ => unreachable!(),
+            },
+            Property::UintRange(x) => match self {
+                &mut NewType::Uint { ref mut range, .. } => *range = Some(x),
+                _ => unreachable!(),
+            },
+            Property::FloatDefault(x) => match self {
+                &mut NewType::Float { ref mut default, .. } => *default = Some(x),
+                _ => unreachable!(),
+            },
+            Property::FloatRange(x) => match self {
+                &mut NewType::Float { ref mut range, .. } => *range = Some(x),
+                _ => unreachable!(),
+            },
+            Property::DateDefault(x) => match self {
+                &mut NewType::Date { ref mut default, .. } => *default = Some(x),
+                _ => unreachable!(),
+            },
+            Property::DateRange(x) => match self {
+                &mut NewType::Date { ref mut range, .. } => *range = Some(x),
+                _ => unreachable!(),
+            },
+            Property::StringDefault(x) => match self {
+                &mut NewType::String { ref mut default, .. } => *default = Some(x),
+                _ => unreachable!(),
+            },
+            Property::StringRange(x) => match self {
+                &mut NewType::String { ref mut range, .. } => *range = Some(x),
+                _ => unreachable!(),
+            },
+            Property::BinaryDefault(x) => match self {
+                &mut NewType::Binary { ref mut default, .. } => *default = Some(x),
+                _ => unreachable!(),
+            },
+            Property::BinaryRange(x) => match self {
+                &mut NewType::Binary { ref mut range, .. } => *range = Some(x),
+                _ => unreachable!(),
+            },
+
+            _ => unreachable!(),
         }
     }
 }

@@ -440,14 +440,30 @@ named!(date_range<Property>, delimited!(
     pair!(separator, tag!(";"))
 ));
 
-named!(string_range<StringRange>, map_opt!(
+named!(string_range<Property>, map_opt!(
     uint_range,
-    |ur: UintRange| ur.iter().map(|uri| uri.to_string_range_item()).collect()
+    |prop: Property| match prop {
+        Property::UintRange(ur) => {
+            ur.iter()
+              .map(|uri| uri.to_string_range_item())
+              .collect::<Option<Vec<_>>>()
+              .map(Property::StringRange)
+        }
+        _ => unreachable!(),
+    }
 ));
 
-named!(binary_range<BinaryRange>, map_opt!(
+named!(binary_range<Property>, map_opt!(
     uint_range,
-    |ur: UintRange| ur.iter().map(|uri| uri.to_binary_range_item()).collect()
+    |prop: Property| match prop {
+        Property::UintRange(ur) => {
+            ur.iter()
+              .map(|uri| uri.to_binary_range_item())
+              .collect::<Option<Vec<_>>>()
+              .map(Property::BinaryRange)
+        }
+        _ => unreachable!(),
+    }
 ));
 
 named!(size<Property>, delimited!(
