@@ -1,0 +1,15 @@
+[package]
+name = "ebml_macros"
+version = "0.1.0"
+authors = ["Zachary Neely <zrussellneely@gmail.com>"]
+
+[dependencies]
+chrono = "0.4"
+ebml = { path = "../ebml"}
+nom = "3"
+quote = "0.3"
+
+clippy = { optional = true, version = "*" }
+
+[features]
+dev = ["clippy"]
