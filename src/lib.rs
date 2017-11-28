@@ -109,14 +109,14 @@ enum NewType<'a> {
     },
 }
 impl<'a> NewType<'a> {
-    fn update<'b>(&mut self, val: &Property<'b>) {
-        match *val {
+    fn update<'b>(&mut self, val: Property<'b>) {
+        match val {
             Property::IntDefault(x) => match self {
-                &mut NewType::Int { mut default, .. } => default = Some(x.clone()),
+                &mut NewType::Int { ref mut default, .. } => *default = Some(x),
                 _ => unreachable!(),
             },
             Property::IntRange(x) => match self {
-                &mut NewType::Int { mut range, .. } => range = Some(x.clone()),
+                &mut NewType::Int { ref mut range, .. } => *range = Some(x),
                 _ => unreachable!(),
             },
             _ => unimplemented!(),

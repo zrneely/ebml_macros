@@ -561,6 +561,11 @@ named!(hblock<Header>, preceded!(
     separated_nonempty_list_complete!(separator, header_statement)
 ));
 
+fn update_newtype_with_property<'a, 'b>(mut nt: NewType<'a>, p: Property<'b>) -> NewType<'a> {
+    nt.update(p);
+    nt
+}
+
 named!(dtype<NewType>, do_parse!(
     name: name >>
     separator >>
@@ -575,7 +580,7 @@ named!(dtype<NewType>, do_parse!(
                 fold_many1!(
                     preceded!(separator, alt_complete!(int_range | int_def)),
                     NewType::Int { name, default: None, range: None },
-                    |mut acc: NewType, update: Property| { acc.update(&update); acc }
+                    update_newtype_with_property
                 ),
                 tuple!(separator, tag!("]"), separator, opt!(tag!(";")))
             ) |
@@ -590,7 +595,7 @@ named!(dtype<NewType>, do_parse!(
                 fold_many1!(
                     preceded!(separator, alt_complete!(uint_range | uint_def)),
                     NewType::Uint { name, default: None, range: None },
-                    |mut acc: NewType, update: Property| { acc.update(&update); acc }
+                    update_newtype_with_property
                 ),
                 tuple!(separator, tag!("]"), separator, opt!(tag!(";")))
             ) |
