@@ -76,6 +76,7 @@ enum HeaderStatement<'a> {
     },
 }
 
+#[derive(Debug, PartialEq)]
 enum NewType<'a> {
     Int {
         name: &'a str,

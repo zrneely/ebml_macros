@@ -104,13 +104,13 @@ named!(id<Id>, map_opt!(
 ));
 
 named!(type_<Type>, alt_complete!(
-    map!(tag!("int"), |_| Type::Int) |
-    map!(tag!("uint"), |_| Type::Uint) |
-    map!(tag!("float"), |_| Type::Float) |
-    map!(tag!("string"), |_| Type::String) |
-    map!(tag!("date"), |_| Type::Date) |
-    map!(tag!("binary"), |_| Type::Binary) |
-    map!(tag!("container"), |_| Type::Container) |
+    value!(Type::Int, tag!("int")) |
+    value!(Type::Uint, tag!("uint")) |
+    value!(Type::Float, tag!("float")) |
+    value!(Type::String, tag!("string")) |
+    value!(Type::Date, tag!("date")) |
+    value!(Type::Binary, tag!("binary")) |
+    value!(Type::Container, tag!("container")) |
     map!(name, |n| Type::Name(n))
 ));
 
@@ -150,10 +150,10 @@ named!(level<Level>, do_parse!(
 named!(cardinality<Cardinality>, delimited!(
     tuple!(tag!("card"), separator, tag!(":"), separator),
     alt_complete!(
-        map!(tag!("*"), |_| Cardinality::ZeroOrMany) |
-        map!(tag!("?"), |_| Cardinality::ZeroOrOne) |
-        map!(tag!("1"), |_| Cardinality::ExactlyOne) |
-        map!(tag!("+"), |_| Cardinality::OneOrMany)
+        value!(Cardinality::ZeroOrMany, tag!("*")) |
+        value!(Cardinality::ZeroOrOne, tag!("?")) |
+        value!(Cardinality::ExactlyOne, tag!("1")) |
+        value!(Cardinality::OneOrMany, tag!("+"))
     ),
     pair!(separator, tag!(";"))
 ));
@@ -511,13 +511,13 @@ named!(size<Property>, delimited!(
 named!(ordered<Property>, delimited!(
     tuple!(tag!("ordered"), separator, tag!(":"), separator),
     alt_complete!(
-        map!(
-            alt_complete!(tag!("yes") | tag!("1")),
-            |_| Property::Ordered(true)
+        value!(
+            Property::Ordered(true),
+            alt_complete!(tag!("yes") | tag!("1"))
         ) |
-        map!(
-            alt_complete!(tag!("no") | tag!("0")),
-            |_| Property::Ordered(false)
+        value!(
+            Property::Ordered(false),
+            alt_complete!(tag!("no") | tag!("0"))
         )
     ),
     pair!(separator, tag!(";"))
@@ -582,6 +582,9 @@ fn update_newtype_with_property<'a, 'b>(mut nt: NewType<'a>, p: Property<'b>) ->
     nt
 }
 
+named!(dtype_param_open<()>, value!((), tuple!(separator, tag!("["), separator)));
+named!(dtype_param_close<()>, value!((), tuple!(separator, tag!("]"), opt!(tag!(";")))));
+
 named!(dtype<NewType>, do_parse!(
     name: name >>
     separator >>
@@ -592,13 +595,13 @@ named!(dtype<NewType>, do_parse!(
         Type::Int => alt_complete!(
             // It _has_ properties
             delimited!(
-                tuple!(separator, tag!("["), separator),
+                dtype_param_open,
                 fold_many1!(
                     preceded!(separator, alt_complete!(int_range | int_def)),
                     NewType::Int { name, default: None, range: None },
                     update_newtype_with_property
                 ),
-                tuple!(separator, tag!("]"), separator, opt!(tag!(";")))
+                dtype_param_close
             ) |
             // It _doesn't_ have properties
             value!(NewType::Int { name, default: None, range: None })
@@ -607,19 +610,79 @@ named!(dtype<NewType>, do_parse!(
         Type::Uint => alt_complete!(
             // It _has_ properties
             delimited!(
-                tuple!(separator, tag!("["), separator),
+                dtype_param_open,
                 fold_many1!(
                     preceded!(separator, alt_complete!(uint_range | uint_def)),
                     NewType::Uint { name, default: None, range: None },
                     update_newtype_with_property
                 ),
-                tuple!(separator, tag!("]"), separator, opt!(tag!(";")))
+                dtype_param_close
             ) |
             // It _doesn't_ have properties
             value!(NewType::Uint { name, default: None, range: None })
         ) |
 
+        Type::Float => alt_complete!(
+            // It _has_ properties
+            delimited!(
+                dtype_param_open,
+                fold_many1!(
+                    preceded!(separator, alt_complete!(float_range | float_def)),
+                    NewType::Float { name, default: None, range: None },
+                    update_newtype_with_property
+                ),
+                dtype_param_close
+            ) |
+            // It _doesn't_ have properties
+            value!(NewType::Float { name, default: None, range: None })
+        ) |
 
+        Type::Date => alt_complete!(
+            // It _has_ properties
+            delimited!(
+                dtype_param_open,
+                fold_many1!(
+                    preceded!(separator, alt_complete!(date_range | date_def)),
+                    NewType::Date { name, default: None, range: None },
+                    update_newtype_with_property
+                ),
+                dtype_param_close
+            ) |
+            // It _doesn't_ have properties
+            value!(NewType::Date { name, default: None, range: None })
+        ) |
+
+        Type::String => alt_complete!(
+            // It _has_ properties
+            delimited!(
+                dtype_param_open,
+                fold_many1!(
+                    preceded!(separator, alt_complete!(string_range | string_def)),
+                    NewType::String { name, default: None, range: None },
+                    update_newtype_with_property
+                ),
+                dtype_param_close
+            ) |
+            // It _doesn't_ have properties
+            value!(NewType::String { name, default: None, range: None })
+        ) |
+
+        Type::Binary => alt_complete!(
+            // It _has_ properties
+            delimited!(
+                dtype_param_open,
+                fold_many1!(
+                    preceded!(separator, alt_complete!(binary_range | binary_def)),
+                    NewType::Binary { name, default: None, range: None },
+                    update_newtype_with_property
+                ),
+                dtype_param_close
+            ) |
+            // It _doesn't_ have properties
+            value!(NewType::Binary { name, default: None, range: None })
+        ) |
+
+        // Type::Container and Type::Name are unimplemented
         _ => value!(NewType::Int { name, default: None, range: None })
     ) >>
     (value)

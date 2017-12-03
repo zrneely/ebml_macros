@@ -462,3 +462,30 @@ fn test_hblock() {
         },
     ]);
 }
+
+#[test]
+fn test_dtype() {
+    gen_test!(dtype, "dtype0", NewType::Int {
+        name: "Foo",
+        default: None,
+        range: None,
+    });
+    gen_test!(dtype, "dtype1", NewType::Int {
+        name: "bar123",
+        default: Some(25),
+        range: Some(vec![IntRangeItem::Bounded {
+            start: -25,
+            end: 100,
+        }]),
+    });
+    gen_test!(dtype, "dtype2", NewType::Uint {
+        name: "Foo",
+        default: None,
+        range: None,
+    });
+    gen_test!(dtype, "dtype3", NewType::Uint {
+        name: "Foo",
+        default: Some(666),
+        range: None,
+    });
+}
