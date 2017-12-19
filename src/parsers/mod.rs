@@ -60,16 +60,9 @@ named!(bcomment<&str>, map_res!(
     str::from_utf8
 ));
 
-named!(comment<&str>, alt!(lcomment | bcomment));
+named!(comment<&str>, ws!(alt!(lcomment | bcomment)));
 
-named!(separator<()>, ws!(
-    fold_many0!(
-        ws!(comment),
-        (),
-        // We don't care about any of the values
-        |_: (), _| ()
-    )
-));
+named!(sep<()>, ws!(value!((), many0!(comment))));
 
 // Sadly handwritten name parser.
 fn name(input: &[u8]) -> IResult<&[u8], &str> {
@@ -115,18 +108,18 @@ named!(type_<Type>, alt_complete!(
 ));
 
 named!(parent<Vec<&str>>, delimited!(
-    tuple!(tag!("parent"), separator, tag!(":"), separator),
+    tuple!(tag!("parent"), sep, tag!(":"), sep),
     parents,
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(parents<Vec<&str>>, separated_nonempty_list_complete!(
-    delimited!(separator, tag!(","), separator),
+    delimited!(sep, tag!(","), sep),
     name
 ));
 
 named!(level<Level>, do_parse!(
-    tag!("level") >> separator >> tag!(":") >> separator >>
+    tag!("level") >> sep >> tag!(":") >> sep >>
     start: map_res!(
         map_res!(take_while!(is_digit), str::from_utf8),
         FromStr::from_str
@@ -138,7 +131,7 @@ named!(level<Level>, do_parse!(
             FromStr::from_str
         )
     ) >>
-    separator >> tag!(";") >>
+    sep >> tag!(";") >>
 
     (if let Some(end) = end {
         Level::Bounded { start, end }
@@ -148,14 +141,14 @@ named!(level<Level>, do_parse!(
 ));
 
 named!(cardinality<Cardinality>, delimited!(
-    tuple!(tag!("card"), separator, tag!(":"), separator),
+    tuple!(tag!("card"), sep, tag!(":"), sep),
     alt_complete!(
         value!(Cardinality::ZeroOrMany, tag!("*")) |
         value!(Cardinality::ZeroOrOne, tag!("?")) |
         value!(Cardinality::ExactlyOne, tag!("1")) |
         value!(Cardinality::OneOrMany, tag!("+"))
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(int_v<i64>, map_res!(
@@ -261,13 +254,13 @@ named!(binary_v<Vec<u8>>, alt_complete!(
 
 
 named!(int_def<Property>, delimited!(
-    tuple!(tag!("def"), separator, tag!(":"), separator),
+    tuple!(tag!("def"), sep, tag!(":"), sep),
     map!(int_v, Property::IntDefault),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(uint_def<Property>, delimited!(
-    tuple!(tag!("def"), separator, tag!(":"), separator),
+    tuple!(tag!("def"), sep, tag!(":"), sep),
     map!(
         map_res!(
             map_res!(take_while!(is_digit), str::from_utf8),
@@ -275,38 +268,38 @@ named!(uint_def<Property>, delimited!(
         ),
         Property::UintDefault
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(float_def<Property>, delimited!(
-    tuple!(tag!("def"), separator, tag!(":"), separator),
+    tuple!(tag!("def"), sep, tag!(":"), sep),
     map!(float_v, Property::FloatDefault),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(date_def<Property>, delimited!(
-    tuple!(tag!("def"), separator, tag!(":"), separator),
+    tuple!(tag!("def"), sep, tag!(":"), sep),
     map!(date_v, Property::DateDefault),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(string_def<Property>, delimited!(
-    tuple!(tag!("def"), separator, tag!(":"), separator),
+    tuple!(tag!("def"), sep, tag!(":"), sep),
     map!(map_res!(binary_v, String::from_utf8), Property::StringDefault),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(binary_def<Property>, delimited!(
-    tuple!(tag!("def"), separator, tag!(":"), separator),
+    tuple!(tag!("def"), sep, tag!(":"), sep),
     map!(binary_v, Property::BinaryDefault),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(int_range<Property>, delimited!(
-    tuple!(tag!("range"), separator, tag!(":"), separator),
+    tuple!(tag!("range"), sep, tag!(":"), sep),
     map!(
         separated_nonempty_list_complete!(
-            delimited!(separator, tag!(","), separator),
+            delimited!(sep, tag!(","), sep),
             alt_complete!(
                 do_parse!(
                     start: int_v >>
@@ -333,14 +326,14 @@ named!(int_range<Property>, delimited!(
         ),
         Property::IntRange
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(uint_range<Property>, delimited!(
-    tuple!(tag!("range"), separator, tag!(":"), separator),
+    tuple!(tag!("range"), sep, tag!(":"), sep),
     map!(
         separated_nonempty_list_complete!(
-            delimited!(separator, tag!(","), separator),
+            delimited!(sep, tag!(","), sep),
             alt_complete!(
                 do_parse!(
                     start: map_res!(
@@ -375,14 +368,14 @@ named!(uint_range<Property>, delimited!(
         ),
         Property::UintRange
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(float_range<Property>, delimited!(
-    tuple!(tag!("range"), separator, tag!(":"), separator),
+    tuple!(tag!("range"), sep, tag!(":"), sep),
     map!(
         separated_nonempty_list_complete!(
-            delimited!(separator, tag!(","), separator),
+            delimited!(sep, tag!(","), sep),
             alt_complete!(
                 do_parse!(
                     start: float_v >>
@@ -410,14 +403,14 @@ named!(float_range<Property>, delimited!(
         ),
         Property::FloatRange
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(date_range<Property>, delimited!(
-    tuple!(tag!("range"), separator, tag!(":"), separator),
+    tuple!(tag!("range"), sep, tag!(":"), sep),
     map!(
         separated_nonempty_list_complete!(
-            delimited!(separator, tag!(","), separator),
+            delimited!(sep, tag!(","), sep),
             alt_complete!(
                 do_parse!(
                     start: date_v >>
@@ -437,7 +430,7 @@ named!(date_range<Property>, delimited!(
         ),
         Property::DateRange
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(string_range<Property>, map_opt!(
@@ -467,10 +460,10 @@ named!(binary_range<Property>, map_opt!(
 ));
 
 named!(size<Property>, delimited!(
-    tuple!(tag!("size"), separator, tag!(":"), separator),
+    tuple!(tag!("size"), sep, tag!(":"), sep),
     map!(
         separated_nonempty_list_complete!(
-            delimited!(separator, tag!(","), separator),
+            delimited!(sep, tag!(","), sep),
             alt_complete!(
                 do_parse!(
                     start: map_res!(
@@ -505,11 +498,11 @@ named!(size<Property>, delimited!(
         ),
         Property::Size
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 named!(ordered<Property>, delimited!(
-    tuple!(tag!("ordered"), separator, tag!(":"), separator),
+    tuple!(tag!("ordered"), sep, tag!(":"), sep),
     alt_complete!(
         value!(
             Property::Ordered(true),
@@ -520,7 +513,7 @@ named!(ordered<Property>, delimited!(
             alt_complete!(tag!("no") | tag!("0"))
         )
     ),
-    pair!(separator, tag!(";"))
+    pair!(sep, tag!(";"))
 ));
 
 // Types impossible to distinguish:
@@ -528,44 +521,44 @@ named!(ordered<Property>, delimited!(
 //      String vs Binary, if the Binary happens to be valid Unicode
 named!(header_statement<HeaderStatement>, do_parse!(
     name: name >>
-    separator >>
+    sep >>
     tag!(":=") >>
-    separator >>
+    sep >>
     value: alt_complete!(
         // By including the terminator in these parsers, we stop floats from getting interpreted as
         // integers.
         map!(
             terminated!(
                 map_res!(map_res!(take_while!(is_digit), str::from_utf8), FromStr::from_str),
-                pair!(separator, tag!(";"))
+                pair!(sep, tag!(";"))
             ),
             |value| HeaderStatement::Uint { name, value }
         ) |
         map!(
-            terminated!(int_v, pair!(separator, tag!(";"))),
+            terminated!(int_v, pair!(sep, tag!(";"))),
             |value| HeaderStatement::Int { name, value }
         ) |
         map!(
-            terminated!(float_v, pair!(separator, tag!(";"))),
+            terminated!(float_v, pair!(sep, tag!(";"))),
             |value| HeaderStatement::Float { name, value }
         ) |
         map!(
-            terminated!(date_v, pair!(separator, tag!(";"))),
+            terminated!(date_v, pair!(sep, tag!(";"))),
             |value| HeaderStatement::Date { name, value }
         ) |
         map!(
             terminated!(
                 map_res!(binary_v, String::from_utf8),
-                pair!(separator, tag!(";"))
+                pair!(sep, tag!(";"))
             ),
             |value| HeaderStatement::String { name, value }
         ) |
         map!(
-            terminated!(binary_v, pair!(separator, tag!(";"))),
+            terminated!(binary_v, pair!(sep, tag!(";"))),
             |value| HeaderStatement::Binary { name, value }
         ) |
         map!(
-            terminated!(::parsers::name, pair!(separator, tag!(";"))),
+            terminated!(::parsers::name, pair!(sep, tag!(";"))),
             |value| HeaderStatement::Named { name, value }
         )
     ) >>
@@ -573,8 +566,8 @@ named!(header_statement<HeaderStatement>, do_parse!(
 ));
 
 named!(hblock<Header>, preceded!(
-    tuple!(tag!("declare"), separator, tag!("header"), separator, tag!("{"), separator),
-    separated_nonempty_list_complete!(separator, header_statement)
+    tuple!(tag!("declare"), sep, tag!("header"), sep, tag!("{"), sep),
+    separated_nonempty_list_complete!(sep, header_statement)
 ));
 
 fn update_newtype_with_property<'a, 'b>(mut nt: NewType<'a>, p: Property<'b>) -> NewType<'a> {
@@ -582,44 +575,56 @@ fn update_newtype_with_property<'a, 'b>(mut nt: NewType<'a>, p: Property<'b>) ->
     nt
 }
 
-named!(dtype_param_open<()>, value!((), tuple!(separator, tag!("["), separator)));
-named!(dtype_param_close<()>, value!((), tuple!(separator, tag!("]"), opt!(tag!(";")))));
+named!(dtype_param_open, dbg_dmp!(delimited!(sep, tag!("["), sep)));
+named!(dtype_param_close<()>, value!((), dbg_dmp!(tuple!(
+    sep,
+    tag!("]"),
+    sep,
+    opt!(tag!(";"))
+))));
+
+named_args!(int_properties<'a>(name: &'a str)<NewType<'a>>, delimited!(
+    dbg_dmp!(dtype_param_open),
+    dbg_dmp!(value!(NewType::Int{name:"",default:None,range:None}, tag!("x"))),
+    //dbg_dmp!(fold_many1!(
+    //    alt!(delimited!(sep, int_range, sep) | delimited!(sep, int_def, sep)),
+    //    NewType::Int { name, default: None, range: None },
+    //    update_newtype_with_property
+    //)),
+    dbg_dmp!(dtype_param_close)
+));
+
+named_args!(uint_properties<'a>(name: &'a str)<NewType<'a>>, delimited!(
+    dtype_param_open,
+    fold_many1!(
+        alt!(uint_range | uint_def),
+        NewType::Uint { name, default: None, range: None },
+        update_newtype_with_property
+    ),
+    dtype_param_close
+));
 
 named!(dtype<NewType>, do_parse!(
     name: name >>
-    separator >>
+    sep >>
     tag!(":=") >>
-    separator >>
-    value: switch!(type_,
+    sep >>
+    value: switch!(terminated!(type_, sep),
 
-        Type::Int => alt_complete!(
-            // It _has_ properties
-            delimited!(
-                dtype_param_open,
-                fold_many1!(
-                    preceded!(separator, alt_complete!(int_range | int_def)),
-                    NewType::Int { name, default: None, range: None },
-                    update_newtype_with_property
-                ),
-                dtype_param_close
-            ) |
-            // It _doesn't_ have properties
-            value!(NewType::Int { name, default: None, range: None })
+        Type::Int => alt!(
+            dbg_dmp!(call!(int_properties, name)) |
+            value!(
+                NewType::Int { name, default: None, range: None },
+                not!(dtype_param_open)
+            )
         ) |
 
-        Type::Uint => alt_complete!(
-            // It _has_ properties
-            delimited!(
-                dtype_param_open,
-                fold_many1!(
-                    preceded!(separator, alt_complete!(uint_range | uint_def)),
-                    NewType::Uint { name, default: None, range: None },
-                    update_newtype_with_property
-                ),
-                dtype_param_close
-            ) |
-            // It _doesn't_ have properties
-            value!(NewType::Uint { name, default: None, range: None })
+        Type::Uint => alt!(
+            call!(uint_properties, name) |
+            value!(
+                NewType::Uint { name, default: None, range: None },
+                not!(dtype_param_open)
+            )
         ) |
 
         Type::Float => alt_complete!(
@@ -627,14 +632,17 @@ named!(dtype<NewType>, do_parse!(
             delimited!(
                 dtype_param_open,
                 fold_many1!(
-                    preceded!(separator, alt_complete!(float_range | float_def)),
+                    preceded!(sep, alt_complete!(float_range | float_def)),
                     NewType::Float { name, default: None, range: None },
                     update_newtype_with_property
                 ),
                 dtype_param_close
             ) |
             // It _doesn't_ have properties
-            value!(NewType::Float { name, default: None, range: None })
+            value!(
+                NewType::Float { name, default: None, range: None },
+                not!(dtype_param_open)
+            )
         ) |
 
         Type::Date => alt_complete!(
@@ -642,29 +650,35 @@ named!(dtype<NewType>, do_parse!(
             delimited!(
                 dtype_param_open,
                 fold_many1!(
-                    preceded!(separator, alt_complete!(date_range | date_def)),
+                    preceded!(sep, alt_complete!(date_range | date_def)),
                     NewType::Date { name, default: None, range: None },
                     update_newtype_with_property
                 ),
                 dtype_param_close
             ) |
             // It _doesn't_ have properties
-            value!(NewType::Date { name, default: None, range: None })
+            value!(
+                NewType::Date { name, default: None, range: None },
+                not!(dtype_param_open)
+            )
         ) |
 
         Type::String => alt_complete!(
             // It _has_ properties
             delimited!(
-                dtype_param_open,
+                dbg_dmp!(dtype_param_open),
                 fold_many1!(
-                    preceded!(separator, alt_complete!(string_range | string_def)),
+                    preceded!(sep, alt_complete!(string_range | string_def)),
                     NewType::String { name, default: None, range: None },
                     update_newtype_with_property
                 ),
                 dtype_param_close
             ) |
             // It _doesn't_ have properties
-            value!(NewType::String { name, default: None, range: None })
+            value!(
+                NewType::String { name, default: None, range: None },
+                not!(dtype_param_open)
+            )
         ) |
 
         Type::Binary => alt_complete!(
@@ -672,14 +686,17 @@ named!(dtype<NewType>, do_parse!(
             delimited!(
                 dtype_param_open,
                 fold_many1!(
-                    preceded!(separator, alt_complete!(binary_range | binary_def)),
+                    preceded!(sep, alt_complete!(binary_range | binary_def)),
                     NewType::Binary { name, default: None, range: None },
                     update_newtype_with_property
                 ),
                 dtype_param_close
             ) |
             // It _doesn't_ have properties
-            value!(NewType::Binary { name, default: None, range: None })
+            value!(
+                NewType::Binary { name, default: None, range: None },
+                not!(dtype_param_open)
+            )
         ) |
 
         // Type::Container and Type::Name are unimplemented

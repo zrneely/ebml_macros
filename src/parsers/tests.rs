@@ -62,8 +62,8 @@ fn test_comment() {
 
 #[test]
 fn test_separator() {
-    gen_test!(separator, "separator0", (), b"test\n");
-    gen_test!(separator, "separator1", (), b"t\n");
+    gen_test!(sep, "separator0", (), b"test\n");
+    gen_test!(sep, "separator1", (), b"t\n");
 }
 
 #[test]
@@ -488,4 +488,73 @@ fn test_dtype() {
         default: Some(666),
         range: None,
     });
+    gen_test!(dtype, "dtype4", NewType::Float {
+        name: "Foo",
+        default: None,
+        range: None,
+    });
+    gen_test!(dtype, "dtype5", NewType::Float {
+        name: "Foo",
+        default: None,
+        range: Some(vec![
+            FloatRangeItem::To {
+                end: -1.0e8,
+                include_end: true,
+            },
+            FloatRangeItem::From {
+                start: 6.4,
+                include_start: false,
+            },
+            FloatRangeItem::Bounded {
+                start: 4.0,
+                include_start: true,
+                end: 6.3,
+                include_end: false,
+            },
+        ]),
+    });
+    gen_test!(dtype, "dtype6", NewType::Date {
+        name: "abcdefghijklmnopqrstuvwxyz1234567890",
+        default: None,
+        range: None,
+    });
+    gen_test!(dtype, "dtype7", NewType::Date {
+        name: "Foo",
+        default: None,
+        range: Some(vec![
+            DateRangeItem::From {
+                start: NaiveDateTime::new(
+                    NaiveDate::from_ymd(1776, 6, 4),
+                    NaiveTime::from_hms_milli(9, 21, 55, 356)
+                ),
+            },
+        ]),
+    });
+    gen_test!(dtype, "dtype8", NewType::String {
+        name: "foo",
+        default: None,
+        range: None,
+    });
+    gen_test!(dtype, "dtype9", NewType::String {
+        name: "FooA",
+        default: Some("elephant".into()),
+        range: Some(vec![
+            StringRangeItem::Bounded {
+                start: 12352,
+                end: 12447,
+            },
+            StringRangeItem::Bounded {
+                start: 32,
+                end: 127,
+            },
+        ]),
+    });
+    gen_test!(dtype, "dtype10", NewType::Binary {
+        name: "foo",
+        default: None,
+        range: None,
+    });
+
+    // TODO fail test for every type with empty params list (ie [])
+    // TODO fail test for every type with param list that doesn't parse
 }
